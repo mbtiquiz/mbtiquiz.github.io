@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MBTI Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .question {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], 
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .options {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+        }
+
+        .spectrum {
+            margin: 20px 0;
+        }
+
+        .bar-container {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            position: relative;
+            margin: 5px 0;
+        }
+
+        .bar-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .marker {
+            width: 10px;
+            height: 20px;
+            background-color: #4CAF50;
+            position: absolute;
+            transition: left 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div id="personalInfo" class="section active">
+        <h2>Personal Information</h2>
+        <div class="question">
+            <label>Name:</label>
+            <input type="text" id="name">
+        </div>
+        <div class="question">
+            <label>Age:</label>
+            <input type="text" id="age">
+        </div>
+        <div class="question">
+            <label>City:</label>
+            <input type="text" id="city">
+        </div>
+        <div class="question">
+            <label>Goals in life:</label>
+            <textarea id="goals"></textarea>
+        </div>
+        <button onclick="startQuiz()">Start Quiz</button>
+    </div>
+
+    <div id="quiz" class="section">
+        <h2>Question <span id="questionNumber">1</span>/8</h2>
+        <div id="questionText"></div>
+        <div class="options">
+            <button onclick="answer(0)">Option 1</button>
+            <button onclick="answer(1)">Option 2</button>
+        </div>
+    </div>
+
+    <div id="results" class="section">
+        <h2>Your MBTI Results</h2>
+        <p>Name: <span id="resultName"></span></p>
+        <p>Your type is: <span id="mbtiType"></span></p>
+        
+        <div class="spectrum">
+            <div class="bar-labels">
+                <span>Extrovert (E)</span>
+                <span>Introvert (I)</span>
+            </div>
+            <div class="bar-container">
+                <div id="EI-marker" class="marker"></div>
+            </div>
+        </div>
+
+        <div class="spectrum">
+            <div class="bar-labels">
+                <span>Sensing (S)</span>
+                <span>Intuition (N)</span>
+            </div>
+            <div class="bar-container">
+                <div id="SN-marker" class="marker"></div>
+            </div>
+        </div>
+
+        <div class="spectrum">
+            <div class="bar-labels">
+                <span>Thinking (T)</span>
+                <span>Feeling (F)</span>
+            </div>
+            <div class="bar-container">
+                <div id="TF-marker" class="marker"></div>
+            </div>
+        </div>
+
+        <div class="spectrum">
+            <div class="bar-labels">
+                <span>Judging (J)</span>
+                <span>Perceiving (P)</span>
+            </div>
+            <div class="bar-container">
+                <div id="JP-marker" class="marker"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                text: "How do you prefer to spend your free time?",
+                options: [
+                    "Going out with friends and meeting new people",
+                    "Staying in and enjoying solitary activities"
+                ],
+                dimension: "EI"
+            },
+            {
+                text: "When solving problems, do you prefer to:",
+                options: [
+                    "Focus on concrete facts and details",
+                    "Think about patterns and possibilities"
+                ],
+                dimension: "SN"
+            },
+            {
+                text: "When making decisions, what do you value more?",
+                options: [
+                    "Logic and objective analysis",
+                    "Personal values and impact on others"
+                ],
+                dimension: "TF"
+            },
+            {
+                text: "How do you prefer to organize your life?",
+                options: [
+                    "Having a clear plan and structure",
+                    "Staying flexible and spontaneous"
+                ],
+                dimension: "JP"
+            },
+            {
+                text: "In group discussions, do you:",
+                options: [
+                    "Speak up quickly and think as you talk",
+                    "Listen first and think before speaking"
+                ],
+                dimension: "EI"
+            },
+            {
+                text: "What interests you more?",
+                options: [
+                    "What is actually happening right now",
+                    "What could potentially happen in the future"
+                ],
+                dimension: "SN"
+            },
+            {
+                text: "When giving feedback, do you tend to:",
+                options: [
+                    "Be direct and straightforward",
+                    "Be diplomatic and considerate"
+                ],
+                dimension: "TF"
+            },
+            {
+                text: "How do you prefer your schedule?",
+                options: [
+                    "Well-planned and organized",
+                    "Open-ended and adaptable"
+                ],
+                dimension: "JP"
+            }
+        ];
+
+        let currentQuestion = 0;
+        let answers = {
+            EI: [],
+            SN: [],
+            TF: [],
+            JP: []
+        };
+
+        function startQuiz() {
+            // Validate personal info
+            const name = document.getElementById('name').value;
+            const age = document.getElementById('age').value;
+            const city = document.getElementById('city').value;
+            const goals = document.getElementById('goals').value;
+
+            if (!name || !age || !city || !goals) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            document.getElementById('personalInfo').classList.remove('active');
+            document.getElementById('quiz').classList.add('active');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestion];
+            document.getElementById('questionNumber').textContent = currentQuestion + 1;
+            document.getElementById('questionText').textContent = question.text;
+            
+            const buttons = document.querySelectorAll('.options button');
+            buttons[0].textContent = question.options[0];
+            buttons[1].textContent = question.options[1];
+        }
+
+        function answer(choice) {
+            const question = questions[currentQuestion];
+            answers[question.dimension].push(choice === 0 ? 1 : 0);
+            
+            currentQuestion++;
+            
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quiz').classList.remove('active');
+            document.getElementById('results').classList.add('active');
+            
+            document.getElementById('resultName').textContent = document.getElementById('name').value;
+
+            const scores = {
+                EI: calculateScore('EI'),
+                SN: calculateScore('SN'),
+                TF: calculateScore('TF'),
+                JP: calculateScore('JP')
+            };
+
+            // Update markers
+            Object.keys(scores).forEach(dimension => {
+                const marker = document.getElementById(`${dimension}-marker`);
+                marker.style.left = `${scores[dimension]}%`;
+            });
+
+            // Calculate MBTI type
+            const type = [
+                scores.EI > 50 ? 'E' : 'I',
+                scores.SN > 50 ? 'S' : 'N',
+                scores.TF > 50 ? 'T' : 'F',
+                scores.JP > 50 ? 'J' : 'P'
+            ].join('');
+
+            document.getElementById('mbtiType').textContent = type;
+        }
+
+        function calculateScore(dimension) {
+            const sum = answers[dimension].reduce((a, b) => a + b, 0);
+            return (sum / answers[dimension].length) * 100;
+        }
+
+        // Initialize first question
+        showQuestion();
+    </script>
+</body>
+</html>
